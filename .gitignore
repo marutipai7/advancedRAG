@@ -1,0 +1,6 @@
+.venv/
+DATA/
+.env
+
+# Ignore all .pyc files
+*.pyc
