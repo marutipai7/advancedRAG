@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup, Tag, soup
+from bs4 import BeautifulSoup, Tag
 import logfire
 
 def parse_html(file_path: str):
