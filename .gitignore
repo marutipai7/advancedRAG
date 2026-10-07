@@ -4,3 +4,4 @@ DATA/
 
 # Ignore all .pyc files
 *.pyc
+processed_data/
