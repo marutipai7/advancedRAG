@@ -7,3 +7,5 @@ DATA/
 processed_data/
 .logfire
 test/
+notebooks/
+DOCS/
