@@ -45,9 +45,9 @@ def _init():
         else:
             logfire.error("No embeddings model available. Please check your configuration.")
 
-def get_embedding_dim() -> int:
-    _init()
-    return _GEMINI_DIM if _model_type == 'gemini' else _FALLBACK__DIM
+# def get_embedding_dim() -> int:
+#     _init()
+#     return _GEMINI_DIM if _model_type == 'gemini' else _FALLBACK__DIM
 
 def _embed_batch(batch: list[str]) -> list[list[float]]:
     if _model_type == 'gemini':
@@ -71,19 +71,39 @@ def _embed_batch(batch: list[str]) -> list[list[float]]:
     else:
         return _active_model.encode(batch, show_progress_bar=False, convert_to_numpy=True).tolist()
 
+# def embed_query(query: str) -> list[float]:
+#     _init()
+#     if _model_type == 'gemini':
+#         return _active_model.embed_query(query)
+#     else:
+#         return _active_model.encode([query])[0].tolist()
+
+# def embed_texts(texts: list[str]) -> list[list[float]]:
+#     _init()
+#     all_embeddings: list[list[float]] = []
+#     for i in range(0, len(texts), BATCH_SIZE):
+#         batch = texts[i:i + BATCH_SIZE]
+#         with logfire.span("Embed batch ", model=_model_type, start=i, size=len(batch)):
+#             embeddings = _embed_batch(batch)
+#             all_embeddings.extend(embeddings)
+#     return all_embeddings
+
+
+_model = SentenceTransformer("all-mpnet-base-v2")
+
 def embed_query(query: str) -> list[float]:
-    _init()
-    if _model_type == 'gemini':
-        return _active_model.embed_query(query)
-    else:
-        return _active_model.encode([query])[0].tolist()
+    return _model.encode(
+        query,
+        convert_to_numpy=True
+    ).tolist()
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
-    _init()
-    all_embeddings: list[list[float]] = []
-    for i in range(0, len(texts), BATCH_SIZE):
-        batch = texts[i:i + BATCH_SIZE]
-        with logfire.span("Embed batch ", model=_model_type, start=i, size=len(batch)):
-            embeddings = _embed_batch(batch)
-            all_embeddings.extend(embeddings)
-    return all_embeddings
+    return _model.encode(
+        texts,
+        batch_size=50,
+        show_progress_bar=False,
+        convert_to_numpy=True
+    ).tolist()
+
+def get_embedding_dim() -> int:
+    return 768

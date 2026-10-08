@@ -4,7 +4,7 @@ from app.config import settings
 from langchain_groq import ChatGroq
 
 
-llm = ChatGroq(api_key=settings.GROQ_API_KEY, model=settings.GROQ_MODEL, fallback_api_key=settings.GROQ_FALLBACK_API_KEY)
+llm = ChatGroq(api_key=settings.GROQ_API_KEY, model=settings.GROQ_MODEL)
 
 def generate_node(state: AgentState):
     """
@@ -14,7 +14,7 @@ def generate_node(state: AgentState):
     query = state["current_query"]
 
     history_str = ""
-    for msg in state["messagess"][:-1]:
+    for msg in state["messages"][:-1]:
         role = "User" if msg["role"] == "User" else "Assistant"
         history_str += f"{role}: {msg['content']}\n"
 

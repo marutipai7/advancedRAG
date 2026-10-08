@@ -37,4 +37,4 @@ def search_enterprise_knowledge(query: str, limit: int = 8):
 
     except Exception as e:
         logfire.warning(f"Qdrant search failed: {str(e)}")
-        return
+        return []

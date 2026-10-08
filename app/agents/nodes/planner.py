@@ -3,7 +3,7 @@ from app.config import settings
 from langchain_groq import ChatGroq
 import logfire
 
-llm = ChatGroq(api_key=settings.GROQ_API_KEY, model=settings.GROQ_MODEL, fallback_api_key=settings.GROQ_FALLBACK_API_KEY)
+llm = ChatGroq(api_key=settings.GROQ_API_KEY, model=settings.GROQ_MODEL)
 
 def planner_node(state: AgentState):
     """

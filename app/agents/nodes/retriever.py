@@ -10,8 +10,8 @@ def retriever_node(state: AgentState):
     query = state["current_query"]
 
     with logfire.span("Knowledge Retrieval"):
-        logfire.info("Searching Qdrant for : {query}")
-        raw_results = search_enterprise_knowledge(query, limit=8)
+        logfire.info(f"Searching Qdrant for : {query}")
+        raw_results = search_enterprise_knowledge(query, limit=15)
         logfire.info(f"Retrieved {len(raw_results)} candidates from Qdrant")
 
         doc_contents = [doc['content'] for doc in raw_results]

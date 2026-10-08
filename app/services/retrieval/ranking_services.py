@@ -57,4 +57,4 @@ def rerank_documents(query:str, documents:list[str], top_n:int = 5) -> list[str]
 
     except Exception as e:
         logfire.error(f"[Reranker] Error reranking documents: {str(e)}")
-        return
+        return []
