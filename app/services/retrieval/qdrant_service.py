@@ -3,6 +3,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from app.config import settings
 from app.services.retrieval.embeddings import embed_query
+import traceback
 
 client = QdrantClient(
     url=settings.QDRANT_URL,
@@ -20,7 +21,7 @@ def search_enterprise_knowledge(query: str, limit: int = 8):
         # Using query_points - the moder standard for Qdrant
         response = client.query_points(
             collection_name=settings.QDRANT_COLLECTION,
-            query_vector=query_vector,
+            query=query_vector,
             limit=limit,
             with_payload=True,
         )
@@ -36,5 +37,7 @@ def search_enterprise_knowledge(query: str, limit: int = 8):
         return results
 
     except Exception as e:
-        logfire.warning(f"Qdrant search failed: {str(e)}")
+        print(f"[qdrant] search failed: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        logfire.warning(f"Qdrant search failed: {e}")
         return []

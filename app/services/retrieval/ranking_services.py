@@ -2,6 +2,8 @@ import logfire
 from flashrank import Ranker, RerankRequest
 import time
 
+_ranker: Ranker | None = None
+
 def _get_ranker() -> Ranker:
     """
     Initializes the FlashRank enginer lazily
@@ -57,4 +59,5 @@ def rerank_documents(query:str, documents:list[str], top_n:int = 5) -> list[str]
 
     except Exception as e:
         logfire.error(f"[Reranker] Error reranking documents: {str(e)}")
-        return []
+        print(f"[reranker] failed: {type(e).__name__}: {e}")
+        return documents[:top_n] 
