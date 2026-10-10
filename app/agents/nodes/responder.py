@@ -59,18 +59,18 @@ def generate_node(state: AgentState):
         "{user_msg}"
         """
 
-        with logfire.span("LLM Synthesis"):
-            try:
-                content = llm.invoke(prompt).content
-                logfire.info("Response synthesised via LLM")
+    with logfire.span("LLM Synthesis"):
+        try:
+            content = llm.invoke(prompt).content
+            logfire.info("Response synthesised via LLM")
 
-                return {
-                    "final_answer": content,
-                    "status":"response generated",
-                    "plan": state["plan"],
-                    "messages": [{"role": "assistant", "content": content}]
-                }
+            return {
+                "final_answer": content,
+                "status":"response generated",
+                "plan": state["plan"],
+                "messages": [{"role": "assistant", "content": content}]
+            }
 
-            except Exception as e:
-                logfire.error(f"LLM synthesis failed: {str(e)}")
-                return
+        except Exception as e:
+            logfire.error(f"LLM synthesis failed: {str(e)}")
+            return

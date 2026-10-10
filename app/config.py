@@ -10,7 +10,9 @@ class Settings:
     GROQ_MODEL = "openai/gpt-oss-120b"
 
     # Portkey LLM Gateway
-    # PORTKEY_API_KEY = os.getenv("PORTKEY_API_KEY")
+    PORTKEY_API_KEY = os.getenv("PORTKEY_API_KEY")
+    GROQ_SLUG = "advancedrag"
+    GROQ_SLUG2 = "rag2"
 
     # Qdrant Vector DB Settings 
     QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
