@@ -2,9 +2,7 @@ import logfire
 from app.agents.state import AgentState
 from app.config import settings
 from langchain_groq import ChatGroq
-
-
-llm = ChatGroq(api_key=settings.GROQ_API_KEY, model=settings.GROQ_MODEL)
+from app.gateways.client import extract_cache_status, portkey_client
 
 def generate_node(state: AgentState):
     """
@@ -61,16 +59,30 @@ def generate_node(state: AgentState):
 
     with logfire.span("LLM Synthesis"):
         try:
-            content = llm.invoke(prompt).content
-            logfire.info("Response synthesised via LLM")
+            response = portkey_client.chat.completions.create(
+                messages=[{"role":"user", "content":prompt}],
+                temperature=0.1,
+            )
+            content = response.choices[0].message.content
+            cache_status = extract_cache_status(response)
+            is_cache_hit = cache_status == "HIT"
+
+            if is_cache_hit:
+                logfire.info("🔥Gateway Cache hit - response served from portkey")
+                plan_update = state["plan"] + ["Cache: Hit"]
+                status = "Cache hit - instant response"
+            else:
+                logfire.info("🔥Gateway Cache miss - response generated from LLM")
+                plan_update = state["plan"]
+                status = "Cache miss - generating response"
 
             return {
                 "final_answer": content,
-                "status":"response generated",
-                "plan": state["plan"],
+                "status":status,
+                "plan": plan_update,
                 "messages": [{"role": "assistant", "content": content}]
             }
 
         except Exception as e:
             logfire.error(f"LLM synthesis failed: {str(e)}")
-            return
+            raise

@@ -93,19 +93,33 @@ define flow farewell
 
 YAML_CONTENT = """
 models:
-    -type: main
-    engine: openai
-    model: gpt-3.5-turbo
+  - type: main
+    engine: groq
+    model: openai/gpt-oss-20b
 
 instructions:
-    -type: general
+    - type: general
+      content: |
+        You are an Enterprise IT Assistant specialising in:
+        - Kubernetes (deployment, scaling, operators, networking)
+        - Intel hardware (CPUs, FPGAs, NICs, SRIOV)
+        - Enterprise networking (SDN, VLANs, BGP, routing)
+        Only answer questions about these topics. Be professional and concise.
+
+prompts:
+  - task: generate_bot_message
     content: |
-      You are an Enterprise IT Assistant specialising in:
-      - Kubernetes (deployment, scaling, operators, networking)
-      - Intel hardware (CPUs, FPGAs, NICs, SRIOV)
-      - Enterprise networking (SDN, VLANs, BGP, routing)
-      Only answer questions about these topics. Be professional and concise.
+      You are given a conversation between a user and a bot. Your task is to output the final message from the bot exactly as requested by the flow state.
+      Do not include any thinking or internal thoughts. Output only the specified text string.
+      
+      User message: "{{ user_message }}"
+      Bot intent: "{{ bot_intent }}"
+      Predefined message: "{{ bot_message }}"
+      
+      Bot message: {{ bot_message }}
 """
+
+
 
 RAIL_INDICATORS = [
     "can't help with that — but ask me anything technical",
