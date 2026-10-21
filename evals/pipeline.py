@@ -32,11 +32,11 @@ def run_pipeline(golden_dataset: dict, progress_callback=None) -> dict:
 
             if progress_callback:
                 progress_callback(i, n, question, "calling")
-
+                
             with logfire.span(
                 f" Live query {i+1}/{n}",
                 question=question[:80],
-                domain=samples.get("domain", ""),
+                domain=sample.get("domain", ""),
             ):
                 try:
                     resp = requests.post(
@@ -87,9 +87,15 @@ def save_results(dataset: dict, path: str) -> None:
         json.dump(dataset, f, ensure_ascii=False, indent=2)
 
 
+
 def load_golden_dataset() -> dict:
-    golden_path = os.path.join(os.path.dirname(__file__), "golden_dataset.json")
-    with open(golden_path) as f:
+    golden_path = os.path.join(
+        os.path.dirname(__file__),
+        "golden_dataset.json"
+    )
+
+    with open(golden_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 
