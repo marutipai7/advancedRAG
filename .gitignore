@@ -9,3 +9,4 @@ processed_data/
 test/
 notebooks/
 DOCS/
+*.json
