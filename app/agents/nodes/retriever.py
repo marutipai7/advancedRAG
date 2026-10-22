@@ -1,29 +1,32 @@
 import logfire
+
 from app.agents.state import AgentState
 from app.services.retrieval.qdrant_service import search_enterprise_knowledge
-from app.services.retrieval.ranking_services import rerank_documents
+from app.services.retrieval.ranking_service import rerank_documents
 
-def retriever_node(state: AgentState):
+
+def retrieve_node(state: AgentState):
+    """
+    Performs vector search and semantic reranking for technical queries.
+    """
     query = state["current_query"]
 
-    with logfire.span("Knowledge Retrieval"):
+    # Standard Retrieval Logic
+    with logfire.span("🔍 Knowledge Retrieval"):
+        logfire.info(f"Searching Qdrant for: {query}")
         raw_results = search_enterprise_knowledge(query, limit=15)
-        logfire.info(f"Qdrant returned {len(raw_results)} candidates for: {query!r}")
-        print(f"[retriever] raw={len(raw_results)} query={query!r}")
-
-        if not raw_results:
-            return {
-                "documents": [],
-                "status": "No documents found",
-                "plan": state["plan"] + ["Retrieval: 0 results from Qdrant"],
-            }
+        logfire.info(f"Retrieved {len(raw_results)} candidates from Vector DB")
 
         doc_contents = [doc["content"] for doc in raw_results]
-        reranked = rerank_documents(query, doc_contents, top_n=5)
-        print(f"[retriever] reranked={len(reranked)}")
+
+        with logfire.span("⚖️ Semantic Reranking"):
+            reranked_contents = rerank_documents(query, doc_contents, top_n=5)
+            logfire.info("Reranking complete. Kept top 5 most relevant chunks.")
+
+        formatted_docs = [f"CONTENT: {doc}" for doc in reranked_contents]
 
     return {
-        "documents": [f"CONTENT: {d}" for d in reranked],
-        "status": "Found technical context",
-        "plan": state["plan"] + [f"Context Retrieved ({len(reranked)} chunks)"],
+        "documents": formatted_docs,
+        "status": "Found technical context.",
+        "plan": state["plan"] + ["Context Retrieved"],
     }

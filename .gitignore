@@ -7,6 +7,10 @@ DATA/
 processed_data/
 .logfire
 test/
+tests/
 notebooks/
 DOCS/
 *.json
+
+*.sh
+*.md
