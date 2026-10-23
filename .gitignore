@@ -14,3 +14,5 @@ DOCS/
 
 *.sh
 *.md
+
+enterprise_rag.egg-info/

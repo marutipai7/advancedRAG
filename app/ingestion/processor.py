@@ -13,7 +13,7 @@ from app.ingestion.loaders.text import parse_text
 from app.ingestion.loaders.html import parse_html
 from app.ingestion.loaders.office import parse_office
 from app.ingestion.chunking.splitter import chunk_text
-from app.services.retrieval.embeddings import embed_texts, get_embedding_dim
+from app.services.retrieval.embedding import embed_texts, get_embedding_dim
 
 logfire.configure(service_name='enterprise-ingestion-service')
 
