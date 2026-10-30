@@ -16,6 +16,15 @@ define user ask off topic
   "can you help me with math homework"
   "tell me about world history"
   "what is the best restaurant near me"
+  "how to make a coffee"
+  "how do I cook pasta"
+  "give me a recipe for pancakes"
+  "how do I lose weight"
+  "best places to travel in europe"
+  "how do I fix my bike"
+  "write a love letter"
+  "who is the president of the us"
+  "translate this sentence to spanish"
 
 define bot refuse off topic
   "I'm an Enterprise IT Assistant focused on Kubernetes, Intel hardware, and networking. I can't help with that — but ask me anything technical!"
@@ -98,10 +107,12 @@ define flow farewell
 """
 
 YAML_CONTENT = """
+colang_version: "1.0"
+
 models:
   - type: main
     engine: openai
-    model: gpt-3.5-turbo
+    model: gpt-oss-20b
 
 instructions:
   - type: general
@@ -110,7 +121,17 @@ instructions:
       - Kubernetes (deployment, scaling, operators, networking)
       - Intel hardware (CPUs, FPGAs, NICs, SRIOV)
       - Enterprise networking (SDN, VLANs, BGP, routing)
-      Only answer questions about these topics. Be professional and concise.
+
+      Only answer questions about these topics.
+      Be professional and concise.
+
+rails:
+  dialog:
+    single_call:
+      enabled: false
+      fallback_to_multiple_calls: true
+    user_messages:
+      embeddings_only: false
 """
 
 # Distinctive substrings from each 'define bot' block above.

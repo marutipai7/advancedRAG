@@ -1,52 +1,125 @@
+
+import os
+import yaml
 import logfire
-from langchain_openai import ChatOpenAI
+
 from nemoguardrails import LLMRails, RailsConfig
 
-from app.config import settings
-from app.guardrails.colang_rules import COLANG_CONTENT, RAIL_INDICATORS, YAML_CONTENT
+from app.guardrails.colang_rules import (
+    COLANG_CONTENT,
+    RAIL_INDICATORS,
+    YAML_CONTENT,
+)
 
 _rails: LLMRails | None = None
 
 
 def initialize_rails() -> None:
-    """
-    Build the NeMo LLMRails singleton at app startup.
-    Uses OpenAI gpt-5-mini for fast intent classification at the gate.
-    """
+    """Initialize NeMo Guardrails with Groq."""
+
     global _rails
 
-    guard_llm = ChatOpenAI(api_key=settings.OPENAI_API_KEY, model="gpt-5-mini")
+    groq_api_key = os.getenv("GROQ_API_KEY")
 
-    config = RailsConfig.from_content(colang_content=COLANG_CONTENT, yaml_content=YAML_CONTENT)
+    if not groq_api_key:
+        raise ValueError("GROQ_API_KEY is not configured")
 
-    _rails = LLMRails(config, llm=guard_llm)
-    logfire.info("🛡️ NeMo Guardrails initialised (gpt-5-mini).")
+    model = os.getenv(
+        "GUARDRAILS_MODEL",
+        "openai/gpt-oss-20b",
+    )
+
+    # Parse the existing NeMo YAML configuration.
+    config_data = yaml.safe_load(YAML_CONTENT) or {}
+
+    # Preserve existing non-main model configurations.
+    existing_models = config_data.get("models", [])
+
+    config_data["models"] = [
+        item for item in existing_models
+        if item.get("type") != "main"
+    ]
+
+    # Configure Groq as the main NeMo model.
+    config_data["models"].append({
+        "type": "main",
+        "engine": "openai",
+        "model": model,
+        "api_key_env_var": "GROQ_API_KEY",
+        "parameters": {
+            "base_url": "https://api.groq.com/openai/v1",
+            "temperature": 0.0,
+        },
+    })
+    config_data.setdefault("rails", {}).setdefault("dialog", {})["user_messages"] = {
+        "embeddings_only": True,
+        "embeddings_only_similarity_threshold": 0.5,
+    }
+    # IMPORTANT:
+    # from_content validates the YAML and creates
+    # proper NeMo Model objects.
+    config = RailsConfig.from_content(
+        colang_content=COLANG_CONTENT,
+        yaml_content=yaml.safe_dump(
+            config_data,
+            sort_keys=False,
+        ),
+    )
+
+    _rails = LLMRails(config)
+
+    logfire.info(
+        f"NeMo Guardrails initialized with Groq ({model})"
+    )
 
 
 def guard(message: str) -> tuple[bool, str | None]:
-    """
-    Run a user message through the NeMo rails gate.
+    """Validate user input through NeMo Guardrails."""
 
-    Returns:
-        (True,  rail_response) — a rail fired; return this response immediately,
-                                skip the RAG pipeline entirely.
-        (False, None)          — message is clean; proceed to LangGraph.
-    """
     if _rails is None:
-        logfire.warning("⚠️ Guardrails not initialised — skipping gate.")
-        return False, None
+        raise RuntimeError("Guardrails not initialized")
 
-    with logfire.span("🛡️ Guardrails Check"):
-        result = _rails.generate(messages=[{"role": "user", "content": message}])
+    with logfire.span("Guardrails Check"):
+        try:
+            result = _rails.generate(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": message,
+                    }
+                ]
+            )
+            info = _rails.explain()
+            info.print_llm_calls_summary()
+            print(info.colang_history)
+            logfire.info(
+                "NeMo raw response",
+                response=str(result),
+            )
+            content = (
+                result.get("content", "")
+                if isinstance(result, dict)
+                else str(result)
+            )
+            normalized_content = content.casefold()
 
-        # NeMo returns {'role': 'assistant', 'content': '...'} — extract text
-        content = result.get("content", "") if isinstance(result, dict) else str(result)
+            fired = any(
+                indicator.casefold() in normalized_content
+                for indicator in RAIL_INDICATORS
+            )
 
-        fired = any(indicator in content for indicator in RAIL_INDICATORS)
+            if fired:
+                logfire.info("Guardrails fired")
+                return True, content
 
-        if fired:
-            logfire.info(f"🛡️ Guardrails fired | query='{message[:80]}'")
-            return True, content
+            logfire.info("Guardrails passed")
+            return False, None
 
-        logfire.info("✅ Guardrails passed.")
-        return False, None
+        except Exception as exc:
+            logfire.exception(
+                "Guardrails execution failed",
+                error=str(exc),
+            )
+            raise RuntimeError(
+                "Guardrails validation failed"
+            ) from exc

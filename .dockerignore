@@ -41,7 +41,7 @@ DATA/
 evals/
 
 # Streamlit UI — runs locally, not served by Cloud Run
-ui/
+
 
 # Notebooks & docs — not needed at runtime
 notebooks/
